@@ -17,15 +17,18 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
     QString code;
+    QString  downloadurl,filesavepath;
     regular regulars;
     QString path;
+    QString nowloading;
     QString getwebcode(QString temp);
     void getEshuushuu(QString);
+    void saveEshuushuu(QString);
+    void saveYande(QString);
 private:
     Ui::MainWindow *ui;
 private slots:
     QString savepath();
-    void hadclicked();
     void getEshuushuuImage();
     void getPixivImage();
     void getYandeImage();
