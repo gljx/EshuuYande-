@@ -4,6 +4,7 @@
 #include"QtNetwork/QNetworkReply"
 #include"QFileDialog"
 #include"QFileInfo"
+#include"about.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -52,11 +53,7 @@ QString MainWindow::getwebcode(QString temp)
         conf.setProtocol(QSsl::TlsV1SslV3);
         request.setSslConfiguration(conf);
         request.setUrl(url);
-    //储存网页代码的文件
-    const QString FILE_NAME = "code.txt";
-
-
-    QNetworkAccessManager manager;
+      QNetworkAccessManager manager;
     QEventLoop loop;
     qDebug() << "Reading code form " << URLSTR;
     //发出请求
@@ -68,22 +65,8 @@ QString MainWindow::getwebcode(QString temp)
 
     //将读到的信息写入文件
     code = reply->readAll();
-
-    QFile file(FILE_NAME);
-    file.open(QIODevice::WriteOnly);
-    if(file.isOpen())
-    {
-    QTextStream out(&file);
-    out << code << endl;
-    file.close();
-    qDebug() << "Finished, the code have written to " << FILE_NAME;
     return code;
-    }
-    else
-    {
-        ui->failreport->append(nowloading);
-        return "\0";
-    }
+
 }
 void MainWindow::saveEshuushuu(QString tempstr)
 {
@@ -168,9 +151,10 @@ void MainWindow::getEshuushuuImage()
         }
     }
     qDebug()<<"循环结束"<<endl;
-    ui->textBrowser->setText("下载结束");
+
 
    }
+    ui->textBrowser->setText("下载结束");
 }
 void MainWindow::getPixivImage()
 {
@@ -233,7 +217,8 @@ void MainWindow::getYandeImage()
 }
 void MainWindow::aboutus()
 {
-
+    about aboutus;
+    aboutus.exec();
 }
 void MainWindow::saveYande(QString tempcode)
 {
