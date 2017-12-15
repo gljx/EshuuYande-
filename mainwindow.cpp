@@ -18,7 +18,12 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionabout,SIGNAL(triggered(bool)),this,SLOT(aboutus()));
     ui->spinBox->setRange(1,10);
     ui->spinBox->setValue(1);
-    ui->lineEdit->hide();
+    downloadurl="The download url is  :";
+    filesavepath="save path is :";
+    path="K:";
+    ui->textBrowser->setText("默认保存到K盘文件夹目录下\n没有K盘的朋友请先选择保存路径\n本软件仅供测试");
+
+
 }
 
 MainWindow::~MainWindow()
@@ -72,7 +77,7 @@ QString MainWindow::getwebcode(QString temp)
     qDebug() << "Finished, the code have written to " << FILE_NAME;
     return code;
 }
-void MainWindow::getEshuushuu(QString tempstr)
+void MainWindow::saveEshuushuu(QString tempstr)
 {
     qDebug()<<"getimg called"<<endl;
     QStringList imglist=regulars.searchimg(tempstr);
@@ -80,6 +85,7 @@ void MainWindow::getEshuushuu(QString tempstr)
     qDebug()<<imglist.size()<<endl;
     int i=0;
     QString temps;
+
     while(!imglist.isEmpty())
    {
        qDebug()<<"imglist"<<i<<"  is    "<<imglist[0]<<endl;
@@ -87,12 +93,16 @@ void MainWindow::getEshuushuu(QString tempstr)
         imglist[0].replace("\"","");
         temps=imglist.takeFirst();
    qDebug()<<temps<<endl;
-   qDebug()<<"The download url is "<<temps;
+   qDebug()<<downloadurl<<temps;
+   downloadurl=downloadurl+temps+"\n";
+   ui->textBrowser->append(downloadurl);
     QUrl url(temps);
     QNetworkRequest requset;
     requset.setUrl(url);
     QNetworkAccessManager manager;
     qDebug() << "Download img form  " << url;
+    downloadurl=downloadurl+temps+"\n";
+    ui->textBrowser->append(downloadurl);
     //发出请求
     QEventLoop loop;
     QNetworkReply *reply = manager.get(QNetworkRequest(url));
@@ -102,65 +112,31 @@ void MainWindow::getEshuushuu(QString tempstr)
     temp=path+"/"+url.fileName();
     qDebug()<<"url.fileName is :   "<<url.fileName()<<endl;
     qDebug()<<"temp path is :   "<<temp<<endl;
+
     QFile file(temp);
     file.open(QIODevice::Append);
     file.write(reply->readAll());
     file.close();
     qDebug()<<"img had download"<<endl;
+    filesavepath=filesavepath+temp+"\n";
+    ui->textBrowser->append(filesavepath);
     i++;
    }
 
 }
 void MainWindow::hadclicked()
 {
-    QString t("https://yande.re/post");
-    t=t+"/show/"+ui->lineEdit->text();
-    QUrl url(t);
-    QNetworkRequest request;
-    QSslConfiguration conf = request.sslConfiguration();
-        conf.setPeerVerifyMode(QSslSocket::VerifyNone);
-        conf.setProtocol(QSsl::TlsV1SslV3);
-        request.setSslConfiguration(conf);
 
-    QNetworkAccessManager manager;
-    QString tempcode=getwebcode(t);
-    QStringList imglist=regulars.search("<a class=\"original-file-changed\" id=\"highres\" href=\"(.*).(jpg|png)",tempcode);
-    qDebug()<<imglist<<endl;
-    if(!imglist.isEmpty())
-
-    {
-        imglist[0].replace("<a class=\"original-file-changed\" id=\"highres\" href=\"","");
-        imglist[0].replace("\"","");
-        url=imglist.takeFirst();
-        request.setUrl(url);
-        qDebug() << "Download img form  " << url;
-        //发出请求
-        QEventLoop loop;
-        QNetworkReply *reply = manager.get(request);
-      QObject::connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
-        loop.exec();
-        QString temp;
-        temp=path+"/"+url.fileName();
-        qDebug()<<"url.fileName is :   "<<url.fileName()<<endl;
-        qDebug()<<"temp path is :   "<<temp<<endl;
-        QFile file(temp);
-        file.open(QIODevice::Append);
-        file.write(reply->readAll());
-        file.close();
-        qDebug()<<"img had download"<<endl;
-   }
-    else
-        qDebug()<<"Fail"<<endl;
 }
 void MainWindow::getEshuushuuImage()
 {
+    ui->textBrowser->setText("正在下载");
     QString next;
     QStringList nextlist;
-    int page;
-    page=ui->spinBox->value();
+    static int page=ui->spinBox->value();
     int i;
     getwebcode("http://e-shuushuu.net/");
-    getEshuushuu(code);
+    saveEshuushuu(code);
     qDebug()<<"next page ready"<<endl;
     nextlist=regulars.searchnext(code);
     qDebug()<<nextlist<<endl;
@@ -168,10 +144,10 @@ void MainWindow::getEshuushuuImage()
   {  next=nextlist.takeFirst();
      next.replace("<li class=\"next\"><a href=\"","http://e-shuushuu.net/");
      next.replace("\"","");
-    for(i=2;i<=page;i++)
+    for(i=1;i<=page;i++)
     {
         qDebug()<<next<<endl;
-        getEshuushuu(getwebcode(next));
+        saveEshuushuu(getwebcode(next));
         nextlist=regulars.searchnext(next);
         if(!nextlist.isEmpty())
         {next=nextlist.takeFirst();
@@ -179,22 +155,103 @@ void MainWindow::getEshuushuuImage()
         next.replace("\"","");
         }
     }
+    qDebug()<<"循环结束"<<endl;
+    ui->textBrowser->setText("下载结束");
+
    }
 }
 void MainWindow::getPixivImage()
 {
-
-
+    ui->lineEdit->show();
+    ui->label->hide();
+    ui->textBrowser->hide();
+    ui->spinBox->hide();
 }
 void MainWindow::getYandeImage()
 {
     ui->lineEdit->show();
     ui->label->hide();
-    ui->textBrowser->hide();
+    ui->textBrowser->setText("正在下载");
+    QString next;
+    QStringList nextlist;
+    static int page=ui->spinBox->value();
+     int i;
+    QString t("https://yande.re/post");
+    t=t+"/show/"+ui->lineEdit->text();
 
+    QString tempcode=getwebcode(t);
+   saveYande(tempcode);
+   nextlist=regulars.search("<li><a href=\"(.*)\">Previous",tempcode);//* next page
+   qDebug()<<"Previous list is :"<<nextlist<<endl;
+   if(!nextlist.isEmpty())
+   {
+       next=nextlist.takeFirst();
+       next.replace("<li><a href=\"","https://yande.re");
+       next.replace("\">Previous","");
+       QString tempstr;
+       for(i=1;i<=page;i++)
+       {
+           qDebug()<<next<<endl;
+           tempstr=getwebcode(next);
+           saveYande(tempstr);
+           nextlist=regulars.search("<li><a href=\"(.*)\">Previous",tempstr);//查找下一页
+           if(!next.isEmpty())
+           {
+                next=nextlist.takeFirst();
+                next.replace("<li><a href=\"","https://yande.re");
+                next.replace("\">Previous","");
+            }
+       }
+       qDebug()<<"循环结束"<<endl;
+       ui->textBrowser->setText("下载结束");
+   }
 
 }
 void MainWindow::aboutus()
 {
+
+}
+void MainWindow::saveYande(QString tempcode)
+{
+    QUrl urly;
+    QString tempstring;
+    QNetworkRequest request;
+    QSslConfiguration conf = request.sslConfiguration();
+        conf.setPeerVerifyMode(QSslSocket::VerifyNone);
+        conf.setProtocol(QSsl::TlsV1SslV3);
+        request.setSslConfiguration(conf);QNetworkAccessManager manager;
+    QStringList imglist=regulars.search("<a class=\"original-file-changed\" id=\"highres\" href=\"(.*).(jpg|png)",tempcode);
+    qDebug()<<imglist<<endl;
+    if(!imglist.isEmpty())
+
+    {
+        imglist[0].replace("<a class=\"original-file-changed\" id=\"highres\" href=\"","");
+        imglist[0].replace("\"","");
+        tempstring=imglist.takeFirst();
+        urly=tempstring;
+        request.setUrl(urly);
+        qDebug() << downloadurl<< urly;
+        downloadurl=downloadurl+tempstring+"\n";
+        ui->textBrowser->append(downloadurl);
+        //发出请求
+        QEventLoop loop;
+        QNetworkReply *reply = manager.get(request);
+      QObject::connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
+        loop.exec();
+        QString temp;
+        temp=path+"/"+urly.fileName();
+        qDebug()<<"url.fileName is :   "<<urly.fileName()<<endl;
+        qDebug()<<"temp path is :   "<<temp<<endl;
+
+        QFile file(temp);
+        file.open(QIODevice::Append);
+        file.write(reply->readAll());
+        file.close();
+        qDebug()<<"img had download"<<endl;
+        filesavepath=filesavepath+temp+"\n";
+        ui->textBrowser->append(filesavepath);
+   }
+    else
+        qDebug()<<"Fail"<<endl;
 
 }
