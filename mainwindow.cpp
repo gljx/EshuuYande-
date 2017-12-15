@@ -46,7 +46,6 @@ QString MainWindow::getwebcode(QString temp)
         conf.setProtocol(QSsl::TlsV1SslV3);
         request.setSslConfiguration(conf);
         request.setUrl(url);
-
     //储存网页代码的文件
     const QString FILE_NAME = "code.txt";
 

@@ -3,7 +3,7 @@
 #include"QRegularExpression"
 #include"QString"
 #include"QFile"
-
+//检索
 QStringList regular::search(QString regulardata,QString data)
 {
     QStringList searchdata;

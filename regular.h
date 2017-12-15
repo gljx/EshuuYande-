@@ -5,7 +5,6 @@
 class regular
 {
 public:
-
     QStringList search(QString regulardata,QString data);
     QStringList searchimg(QString data);
     QStringList searchnext(QString data);
